@@ -74,14 +74,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           ./bin/demo
-          cat ./bin/log/demo.log
+          cat ./log/demo.log
 
       - name: Windows Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Windows'
         run: |
           .\bin\${{ matrix.build_type }}\demo.exe
-          type .\bin\log\demo.log
+          type .\log\demo.log
 
       - name: Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
