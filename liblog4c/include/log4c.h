@@ -1,13 +1,22 @@
 #pragma once
 
+#include <stdio.h>
 #include "log4c_lock.h"
+
+#define LOG_FILE_NAME_MAX 512
 
 #define LOG_LINE_MAX 512
 
 struct log4c {
 	log4c_lock lock;
-	int fd;
+	FILE *file;
 };
+
+#ifdef _MSC_VER
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
 
 enum log_level {
 	FATAL = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4, TRACE = 5

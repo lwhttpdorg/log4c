@@ -41,7 +41,10 @@ option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 
 # AddressSanitizer
 if (ENABLE_ASAN)
-    set(ASAN_FLAGS "-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment")
+    set(ASAN_FLAGS "-fsanitize=address")
+    if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+        set(ASAN_FLAGS "${ASAN_FLAGS} -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment")
+    endif ()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ASAN_FLAGS}")
 endif ()
 

@@ -3,7 +3,10 @@
 #include <stdbool.h>
 
 #ifdef _MSC_VER
+
+#include <windows.h>
 #include <synchapi.h>
+
 #define  log4c_lock CRITICAL_SECTION
 #else
 

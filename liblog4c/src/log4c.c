@@ -1,5 +1,27 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <time.h>
+
+#if defined(_WIN32) || defined(_MSC_VER)
+
+#include <windows.h>
+#include <direct.h>
+#include <io.h>
+#include <processthreadsapi.h>
+
+#define F_OK 0
+
+#ifdef ERROR
+#undef ERROR
+#endif
+
+#endif
 
 #ifdef __linux__
 
@@ -7,7 +29,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <pthread.h>
-#include <stdio.h>
 
 #endif
 
@@ -16,64 +37,92 @@
 
 static struct log4c t_log;
 
-__attribute__((constructor))
-static void lo4c_init() {
-	log_lock_init(&t_log.lock);
-	t_log.fd = -1;
-}
+#if defined(_MSC_VER)
+#pragma section(".CRT$XCU", read)
+#define INITIALIZER2_(f, p) \
+        static void f(void); \
+        __declspec(allocate(".CRT$XCU")) void (*f##_)(void) = f; \
+        __pragma(comment(linker,"/include:" p #f "_")) \
+        static void f(void)
+#ifdef _WIN64
+#define INITIALIZER(f) INITIALIZER2_(f,"")
+#else
+#define INITIALIZER(f) INITIALIZER2_(f,"_")
+#endif
 
-__attribute__((destructor))
-static void lo4c_fini() {
+static void lo4c_finalize(void) {
 	log_lock_fini(&t_log.lock);
-	if (t_log.fd != -1) {
-		fsync(t_log.fd);
-		close(t_log.fd);
+	if (t_log.file != NULL) {
+		fflush(t_log.file);
+		fclose(t_log.file);
 	}
 }
 
-static int open_file(const char *file_name, bool append) {
+INITIALIZER(initialize) {
+	log_lock_init(&t_log.lock);
+	t_log.file = NULL;
+	atexit(lo4c_finalize);
+}
+
+#endif
+
+#ifdef __linux__
+
+__attribute__((constructor))
+static void lo4c_initialize() {
+	log_lock_init(&t_log.lock);
+	t_log.file = NULL;
+}
+
+__attribute__((destructor))
+static void lo4c_finalize() {
+	log_lock_fini(&t_log.lock);
+	if (t_log.file != NULL) {
+		fflush(t_log.file);
+		fclose(t_log.file);
+	}
+}
+#endif
+
+static FILE *open_file(const char *file_name, bool append) {
+	if (strlen(file_name) > LOG_FILE_NAME_MAX) {
+		fprintf(stderr, "the length of log file name over limit, %llu > %d", strlen(file_name), LOG_FILE_NAME_MAX);
+		return NULL;
+	}
 	char *pos = strrchr(file_name, '/');
 	if (pos != NULL) {
-		size_t path_len = (size_t) pos - (size_t) file_name;
-		char path[path_len + 1];
+		size_t path_len = (size_t)pos - (size_t)file_name;
+		char path[LOG_FILE_NAME_MAX + 1];
 		strncpy(path, file_name, path_len);
 		path[path_len] = '\0';
 		if (0 != access(path, F_OK)) {
 #if defined(_MSC_VER) || defined(_WIN32)
-			(void)_mkdir(path.c_str());
+			(void)_mkdir(path);
 #endif
 #if defined(__linux__)
 			mkdir(path, 0755);
 #endif
 		}
 	}
-	int oflag = O_RDWR | O_CREAT;
+	const char *mode = "w";
 	if (append) {
-		oflag |= O_APPEND;
+		mode = "a";
 	}
-#if defined(_MSC_VER) || defined(_WIN32)
-	int mode = _S_IREAD|_S_IWRITE;
-#endif
-
-#ifdef __linux__
-	oflag |= O_CLOEXEC;
-	mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
-#endif
-	int fd = open(file_name, oflag, mode);
-	if (fd ==-1) {
-		perror("can not open the log file\n");
+	FILE *file = fopen(file_name, mode);
+	if (file == NULL) {
+		perror("can not open the log file");
 	}
-	return fd;
+	return file;
 }
 
 struct log4c *get_log(const char *log_file, bool append) {
-	if (t_log.fd == -1) {
+	if (t_log.file == NULL) {
 		log_lock(&t_log.lock);
-		if (t_log.fd == -1) {
-			t_log.fd = open_file(log_file, append);
+		if (t_log.file == NULL) {
+			t_log.file = open_file(log_file, append);
 		}
 		log_unlock(&t_log.lock);
-		return t_log.fd == -1 ? NULL : &t_log;
+		return t_log.file == NULL ? NULL : &t_log;
 	}
 	else {
 		return &t_log;
@@ -153,7 +202,8 @@ void log_out_va(struct log4c *log, enum log_level level, const char *fmt, va_lis
 	used_len += log4c_vscnprintf(buffer + used_len, buf_len - used_len, fmt, args);
 	used_len += log4c_scnprintf(buffer + used_len, buf_len - used_len, "\n");
 	log_lock(&log->lock);
-	(void) write(log->fd, buffer, used_len);
+	(void)fwrite(buffer, 1, used_len, log->file);
+	fflush(log->file);
 	log_unlock(&log->lock);
 }
 
@@ -163,53 +213,54 @@ void log_out(struct log4c *log, enum log_level level, const char *fmt, ...) {
 	buffer[0] = '\0';
 	used_len += build_prefix(level, buffer, buf_len);
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	used_len += log4c_vscnprintf(buffer + used_len, buf_len - used_len, fmt, args);
-	va_end(args);
+			va_end(args);
 	used_len += log4c_scnprintf(buffer + used_len, buf_len - used_len, "\n");
 	log_lock(&log->lock);
-	(void) write(log->fd, buffer, used_len);
+	(void)fwrite(buffer, 1, used_len, log->file);
+	fflush(log->file);
 	log_unlock(&log->lock);
 }
 
 void log_fatal(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, FATAL, fmt, args);
-	va_end(args);
+			va_end(args);
 }
 
 void log_error(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, ERROR, fmt, args);
-	va_end(args);
+			va_end(args);
 }
 
 void log_warn(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, WARN, fmt, args);
-	va_end(args);
+			va_end(args);
 }
 
 void log_info(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, INFO, fmt, args);
-	va_end(args);
+			va_end(args);
 }
 
 void log_debug(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, DEBUG, fmt, args);
-	va_end(args);
+			va_end(args);
 }
 
 void log_trace(struct log4c *log, const char *fmt, ...) {
 	va_list args;
-	va_start(args, fmt);
+			va_start(args, fmt);
 	log_out_va(log, TRACE, fmt, args);
-	va_end(args);
+			va_end(args);
 }
