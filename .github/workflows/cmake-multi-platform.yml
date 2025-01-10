@@ -62,8 +62,8 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DENABLE_DEMO=$([[ "${{ matrix.c_compiler }}" == "cl" ]] && echo "ON" || echo "OFF")
-          -DENABLE_ASAN=${{ matrix.asan_option }}
+          -DENABLE_DEMO=ON
+          -DENABLE_ASAN=ON
           -S ${{ github.workspace }}
 
       - name: Build
@@ -74,6 +74,7 @@ jobs:
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Linux'
         run: |
+          ls -lh ${{ steps.strings.outputs.build-output-dir }}/bin/
           cp ${{ steps.strings.outputs.build-output-dir }}/bin/*.conf ./
           ./bin/demo
           cat ./bin/log/*.log
@@ -82,6 +83,7 @@ jobs:
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Windows'
         run: |
+          dir ${{ steps.strings.outputs.build-output-dir }}\bin\
           copy ${{ steps.strings.outputs.build-output-dir }}\bin\*.conf .\
           .\bin\${{ matrix.build_type }}\demo.exe
           type .\bin\log\*.log
