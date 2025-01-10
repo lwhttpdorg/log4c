@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdarg.h>
+
+#include "log4c.h"
+
 size_t vformat(const char *pattern, char *__restrict buf, size_t buf_len, enum log_level level, const char *fmt,
 				va_list args);
 

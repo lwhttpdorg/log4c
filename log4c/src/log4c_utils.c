@@ -1,8 +1,8 @@
-#include <stdbool.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "log_utils.h"
+#include "log4c_utils.h"
 
 #include <ctype.h>
 
@@ -29,9 +29,9 @@ size_t str_find(const char *haystack, const char *needle) {
 	size_t haystack_len = strlen(haystack);
 	size_t needle_len = strlen(needle);
 	if (needle_len > haystack_len) {
-		return -1;
+		return END_POS;
 	}
-	size_t haystack_pos = -1;
+	size_t haystack_pos = END_POS;
 	for (size_t i = 0; i < haystack_len; i++) {
 		if (0 == strncmp(haystack + i, needle, needle_len)) {
 			haystack_pos = i;

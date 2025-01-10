@@ -24,6 +24,8 @@ size_t log4c_vscnprintf(char *__restrict buf, size_t size, const char *__restric
  */
 size_t log4c_scnprintf(char *__restrict buf, size_t size, const char *__restrict fmt, ...);
 
+#define END_POS ((size_t)-1)
+
 size_t str_find(const char *haystack, const char *needle);
 
 const char *skip_whitespace(const char *str);

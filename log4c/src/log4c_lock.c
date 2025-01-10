@@ -1,6 +1,6 @@
-#include "log_lock.h"
+#include "log4c_lock.h"
 
-void log_lock_init(log_lock *lock) {
+void log4c_lock_init(log4c_lock *lock) {
 #ifdef _MSC_VER
 	(void)InitializeCriticalSectionAndSpinCount(lock, 0x00000400);
 #else
@@ -8,7 +8,7 @@ void log_lock_init(log_lock *lock) {
 #endif
 }
 
-void log_lock_fini(log_lock *lock) {
+void log4c_lock_fini(log4c_lock *lock) {
 #ifdef _MSC_VER
 	DeleteCriticalSection(lock);
 #else
@@ -16,7 +16,7 @@ void log_lock_fini(log_lock *lock) {
 #endif
 }
 
-void lock(log_lock *lock) {
+void lock(log4c_lock *lock) {
 #ifdef _MSC_VER
 	EnterCriticalSection(lock);
 #else
@@ -24,7 +24,7 @@ void lock(log_lock *lock) {
 #endif
 }
 
-void unlock(log_lock *lock) {
+void unlock(log4c_lock *lock) {
 #ifdef _MSC_VER
 	LeaveCriticalSection(lock);
 #else

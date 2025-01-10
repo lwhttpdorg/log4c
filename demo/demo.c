@@ -15,15 +15,12 @@ void layout_test() {
 	log_warn(log, "this is a warn log...");
 	log_error(log, "this is a error log...");
 	log_fatal(log, "this is a fatal log...");
-	log_out(log, ERROR, "this is a trace log...");
+	log_out(log, LOG_ERROR, "this is a trace log...");
 }
 
-#ifdef __linux__
-
-#include <pthread.h>
+#ifdef __GNUC__
 
 void *thread_routine(void *arg) {
-	pthread_setname_np(pthread_self(), "child");
 	layout_test();
 	return NULL;
 }
@@ -45,7 +42,7 @@ int main() {
 	DWORD thread_id;
 	HANDLE handle = CreateThread(NULL, 0, thread_routine, NULL, 0, &thread_id);
 #endif
-#ifdef __linux__
+#ifdef __GNUC__
 	pthread_t id;
 	pthread_create(&id, NULL, thread_routine, NULL);
 #endif
@@ -56,7 +53,7 @@ int main() {
 	log_warn(log, "this is a warn log...");
 	log_error(log, "this is a error log...");
 	log_fatal(log, "this is a fatal log...");
-	log_out(log, ERROR, "this is a trace log...");
+	log_out(log, LOG_ERROR, "this is a trace log...");
 #ifdef _MSC_VER
 	WaitForSingleObject(handle, INFINITE);
 #endif

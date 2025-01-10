@@ -11,7 +11,7 @@
 
 #include "layout_pattern.h"
 #include "log4c.h"
-#include "log_utils.h"
+#include "log4c_utils.h"
 
 const char *MONTH_ABBR_NAME[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -76,6 +76,16 @@ void get_time_now(struct daytime *now) {
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
+	const time_t tm_now = tv.tv_sec;
+	struct tm tm_info;
+	localtime_r(&tm_now, &tm_info);
+	now->year = tm_info.tm_year + 1900;
+	now->month = tm_info.tm_mon + 1;
+	now->day = tm_info.tm_mday;
+	now->hour = tm_info.tm_hour;
+	now->minute = tm_info.tm_min;
+	now->second = tm_info.tm_sec;
+	now->millisecond = tv.tv_usec / 1000;
 #endif
 }
 
@@ -99,83 +109,83 @@ static size_t pattern_format(const char *pattern, char *buf, size_t len, enum lo
 	strncpy(buf, pattern, pattern_len);
 #endif
 	buf[pattern_len] = '\0';
-	if (-1 != str_find(pattern, FULL_YEAR)) {
+	if (END_POS != str_find(pattern, FULL_YEAR)) {
 		char year[6];
 		log4c_scnprintf(year, sizeof(year), "%04d", now.year);
 		replace(buf, len, FULL_YEAR, year);
 	}
-	if (-1 != str_find(pattern, SHORT_YEAR)) {
+	if (END_POS != str_find(pattern, SHORT_YEAR)) {
 		char year[3];
 		log4c_scnprintf(year, sizeof(year), "%02d", now.year);
 		replace(buf, len, SHORT_YEAR, year);
 	}
-	if (-1 != str_find(pattern, FULL_MONTH)) {
+	if (END_POS != str_find(pattern, FULL_MONTH)) {
 		char month[3];
 		log4c_scnprintf(month, sizeof(month), "%02d", now.month);
 		replace(buf, len, FULL_MONTH, month);
 	}
-	if (-1 != str_find(pattern, SHORT_MONTH)) {
+	if (END_POS != str_find(pattern, SHORT_MONTH)) {
 		char month[3];
 		log4c_scnprintf(month, sizeof(month), "%d", now.month);
 	}
-	if (-1 != str_find(pattern, ABBR_MONTH)) {
+	if (END_POS != str_find(pattern, ABBR_MONTH)) {
 		replace(buf, len, ABBR_MONTH, MONTH_ABBR_NAME[now.month]);
 	}
-	if (-1 != str_find(pattern, SHORT_DAY)) {
+	if (END_POS != str_find(pattern, SHORT_DAY)) {
 		char day[3];
 		log4c_scnprintf(day, sizeof(day), "%02d", now.day);
 		replace(buf, len, SHORT_DAY, day);
 	}
-	if (-1 != str_find(pattern, FULL_DAY)) {
+	if (END_POS != str_find(pattern, FULL_DAY)) {
 		char day[3];
 		log4c_scnprintf(day, sizeof(day), "%02d", now.day);
 		replace(buf, len, FULL_DAY, day);
 	}
-	if (-1 != str_find(pattern, SHORT_HOUR)) {
+	if (END_POS != str_find(pattern, SHORT_HOUR)) {
 		char hour[3];
 		log4c_scnprintf(hour, sizeof(hour), "%d", now.hour);
 		replace(buf, len, SHORT_HOUR, hour);
 	}
-	if (-1 != str_find(pattern, FULL_HOUR)) {
+	if (END_POS != str_find(pattern, FULL_HOUR)) {
 		char hour[3];
 		log4c_scnprintf(hour, sizeof(hour), "%02d", now.hour);
 		replace(buf, len, FULL_HOUR, hour);
 	}
-	if (-1 != str_find(pattern, SHORT_MINUTES)) {
+	if (END_POS != str_find(pattern, SHORT_MINUTES)) {
 		char minute[3];
 		log4c_scnprintf(minute, sizeof(minute), "%d", now.minute);
 		replace(buf, len, SHORT_MINUTES, minute);
 	}
-	if (-1 != str_find(pattern, FULL_MINUTES)) {
+	if (END_POS != str_find(pattern, FULL_MINUTES)) {
 		char minute[3];
 		log4c_scnprintf(minute, sizeof(minute), "%02d", now.minute);
 		replace(buf, len, FULL_MINUTES, minute);
 	}
-	if (-1 != str_find(pattern, SHORT_SECOND)) {
+	if (END_POS != str_find(pattern, SHORT_SECOND)) {
 		char second[3];
 		log4c_scnprintf(second, sizeof(second), "%d", now.second);
 		replace(buf, len, SHORT_SECOND, second);
 	}
-	if (-1 != str_find(pattern, FULL_SECOND)) {
+	if (END_POS != str_find(pattern, FULL_SECOND)) {
 		char second[3];
 		log4c_scnprintf(second, sizeof(second), "%02d", now.second);
 		replace(buf, len, FULL_SECOND, second);
 	}
-	if (-1 != str_find(pattern, MILLISECOND)) {
-		char millisecond[3];
+	if (END_POS != str_find(pattern, MILLISECOND)) {
+		char millisecond[4];
 		log4c_scnprintf(millisecond, sizeof(millisecond), "%03d", now.millisecond);
 		replace(buf, len, MILLISECOND, millisecond);
 	}
-	if (-1 != str_find(pattern, THREAD_ID)) {
+	if (END_POS != str_find(pattern, THREAD_ID)) {
 		char thread_id[10];
 		unsigned long tid = get_thread_id();
 		log4c_scnprintf(thread_id, sizeof(thread_id), "T%08u ", tid);
 		replace(buf, len, THREAD_ID, thread_id);
 	}
-	if (-1 != str_find(pattern, LOG_LEVEL)) {
+	if (END_POS != str_find(pattern, LOG_LEVEL)) {
 		replace(buf, len, LOG_LEVEL, LOG_LEVEL_NAMES[level]);
 	}
-	if (-1 != str_find(pattern, LOG_MESSAGE)) {
+	if (END_POS != str_find(pattern, LOG_MESSAGE)) {
 		replace(buf, len, LOG_MESSAGE, message);
 	}
 	return strlen(buf);

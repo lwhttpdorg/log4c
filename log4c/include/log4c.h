@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdio.h>
-#include "log_lock.h"
+#include "log4c_lock.h"
 
 #define LOG_FILE_NAME_MAX 512
 
@@ -10,7 +10,7 @@
 #define CONF_MAX_LINE_LENGTH 128
 
 struct log4c {
-	log_lock lock;
+	log4c_lock lock;
 	char layout_pattern[CONF_MAX_LINE_LENGTH + 1];
 	int console_apender;
 	FILE *file_appender;

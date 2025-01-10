@@ -20,15 +20,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <pthread.h>
 
 #endif
 
-#include "log4c.h"
+#include <stdbool.h>
 
+#include "log4c.h"
 #include "layout_pattern.h"
-#include "log_lock.h"
-#include "log_utils.h"
+#include "log4c_lock.h"
+#include "log4c_utils.h"
 
 #ifdef _MSC_VER
 
@@ -43,14 +43,14 @@ static struct log4c *layout_ptr = NULL;
 static struct log4c layout_instance;
 
 static void layout_initialize() {
-	log_lock_init(&layout_instance.lock);
+	log4c_lock_init(&layout_instance.lock);
 	strcpy(layout_instance.layout_pattern, DEFAULT_LAYOUT_PATTERN);
 	layout_instance.console_apender = -1;
 	layout_instance.file_appender = NULL;
 }
 
 static void layout_finalize() {
-	log_lock_fini(&layout_instance.lock);
+	log4c_lock_fini(&layout_instance.lock);
 	if (layout_instance.file_appender != NULL) {
 		fflush(layout_instance.file_appender);
 		fclose(layout_instance.file_appender);
@@ -80,22 +80,26 @@ INITIALIZER(initialize) {
 
 #endif
 
-#ifdef __linux__
+#ifdef __GNUC__
 
 __attribute__((constructor))
 static void lo4c_initialize() {
-	_lo4c_initialize();
+	layout_initialize();
 }
 
 __attribute__((destructor))
 static void lo4c_finalize() {
-	__lo4c_finalize();
+	layout_finalize();
 }
 #endif
 
 static FILE *open_log(const char *log_file) {
 	if (strlen(log_file) > LOG_FILE_NAME_MAX) {
+#ifdef _WIN32
 		fprintf(stderr, "the length of log file name over limit, %llu > %d", strlen(log_file), LOG_FILE_NAME_MAX);
+#else
+		fprintf(stderr, "the length of log file name over limit, %lu > %d", strlen(log_file), LOG_FILE_NAME_MAX);
+#endif
 		return NULL;
 	}
 	char *pos = strrchr(log_file, '/');
@@ -135,7 +139,7 @@ static FILE *open_log(const char *log_file) {
 
 bool get_value(const char *line, const char *key, char *value) {
 	size_t pos = str_find(line, key);
-	if (-1 == pos) {
+	if (END_POS == pos) {
 		value[0] = '\0';
 		return false;
 	}
