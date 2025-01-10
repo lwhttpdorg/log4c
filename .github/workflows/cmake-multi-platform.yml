@@ -74,16 +74,14 @@ jobs:
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Linux'
         run: |
-          ls -lh ${{ steps.strings.outputs.build-output-dir }}/bin/
           cp ${{ steps.strings.outputs.build-output-dir }}/bin/*.conf ./
           ./bin/demo
-          cat ./bin/log/*.log
+          cat ./log/*.log
 
       - name: Windows Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Windows'
         run: |
-          dir ${{ steps.strings.outputs.build-output-dir }}\bin\
           copy ${{ steps.strings.outputs.build-output-dir }}\bin\*.conf .\
           .\bin\${{ matrix.build_type }}\demo.exe
-          type .\bin\log\*.log
+          type .\log\*.log
