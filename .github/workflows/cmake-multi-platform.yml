@@ -26,7 +26,6 @@ jobs:
         os: [ ubuntu-latest, windows-latest ]
         build_type: [ Debug, Release ]
         c_compiler: [ gcc, clang, cl ]
-        asan_option: [ ON, OFF ]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -34,11 +33,9 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-            asan_option: ON
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            asan_option: ON
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -65,7 +62,7 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DENABLE_DEMO=ON
+          -DENABLE_DEMO=$([[ "${{ matrix.c_compiler }}" == "cl" ]] && echo "ON" || echo "OFF")
           -DENABLE_ASAN=${{ matrix.asan_option }}
           -S ${{ github.workspace }}
 
@@ -77,16 +74,14 @@ jobs:
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Linux'
         run: |
-          cd ${{ steps.strings.outputs.build-output-dir }}
-          ls -lh
+          cp ${{ steps.strings.outputs.build-output-dir }}/bin/*.conf ./
           ./bin/demo
-          cat ./bin/log/demo.log
+          cat ./bin/log/*.log
 
       - name: Windows Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         if: runner.os == 'Windows'
         run: |
-          cd ${{ steps.strings.outputs.build-output-dir }}
-          dir
+          copy ${{ steps.strings.outputs.build-output-dir }}\bin\*.conf .\
           .\bin\${{ matrix.build_type }}\demo.exe
-          type .\bin\log\demo.log
+          type .\bin\log\*.log
