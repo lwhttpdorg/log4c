@@ -208,6 +208,12 @@ void read_conf(const char *filename) {
 	fclose(file);
 }
 
+const char *BANNER = "   __    ___   ___  _  _      ___\n"
+		"  / /   /___\\ / _ \\| || |    / __\\\n"
+		" / /   //  /// /_\\/| || |_  / /\n"
+		"/ /___/ \\_/// /_\\\\ |__   _|/ /___\n"
+		"\\____/\\___/ \\____/    |_|  \\____/\n";
+
 struct log4c *get_layout(const char *conf_file) {
 	if (NULL == conf_file) {
 		return layout_ptr;
@@ -215,6 +221,8 @@ struct log4c *get_layout(const char *conf_file) {
 	if (NULL == layout_ptr) {
 		lock(&layout_instance.lock);
 		if (NULL == layout_ptr) {
+			fprintf(stdout, "%s\n", BANNER);
+			fflush(stdout);
 			read_conf(conf_file);
 			layout_ptr = &layout_instance;
 		}
