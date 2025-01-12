@@ -17,7 +17,6 @@
 
 #ifdef __linux__
 
-#include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -56,13 +55,14 @@ static void layout_finalize() {
 		fclose(layout_instance.file_appender);
 	}
 }
+
 #if defined(_MSC_VER)
 #pragma section(".CRT$XCU", read)
 #define INITIALIZER2_(f, p) \
-        static void f(void); \
-        __declspec(allocate(".CRT$XCU")) void (*f##_)(void) = f; \
-        __pragma(comment(linker,"/include:" p #f "_")) \
-        static void f(void)
+		static void f(void); \
+		__declspec(allocate(".CRT$XCU")) void (*f##_)(void) = f; \
+		__pragma(comment(linker,"/include:" p #f "_")) \
+		static void f(void)
 #ifdef _WIN64
 #define INITIALIZER(f) INITIALIZER2_(f,"")
 #else
@@ -91,6 +91,7 @@ __attribute__((destructor))
 static void lo4c_finalize() {
 	layout_finalize();
 }
+
 #endif
 
 static FILE *open_log(const char *log_file) {
@@ -104,7 +105,7 @@ static FILE *open_log(const char *log_file) {
 	}
 	char *pos = strrchr(log_file, '/');
 	if (pos != NULL) {
-		size_t path_len = (size_t)pos - (size_t)log_file;
+		size_t path_len = (size_t) pos - (size_t) log_file;
 		char path[LOG_FILE_NAME_MAX + 1];
 		strncpy(path, log_file, path_len);
 		path[path_len] = '\0';
@@ -209,10 +210,10 @@ void read_conf(const char *filename) {
 }
 
 const char *BANNER = "   __    ___   ___  _  _      ___\n"
-		"  / /   /___\\ / _ \\| || |    / __\\\n"
-		" / /   //  /// /_\\/| || |_  / /\n"
-		"/ /___/ \\_/// /_\\\\ |__   _|/ /___\n"
-		"\\____/\\___/ \\____/    |_|  \\____/\n";
+                     "  / /   /___\\ / _ \\| || |    / __\\\n"
+                     " / /   //  /// /_\\/| || |_  / /\n"
+                     "/ /___/ \\_/// /_\\\\ |__   _|/ /___\n"
+                     "\\____/\\___/ \\____/    |_|  \\____/\n";
 
 struct log4c *get_layout(const char *conf_file) {
 	if (NULL == conf_file) {
@@ -231,8 +232,6 @@ struct log4c *get_layout(const char *conf_file) {
 	return layout_ptr;
 }
 
-#define THREAD_NAME_MAX_LEN  16
-
 void log_out_va(struct log4c *layout, enum log_level level, const char *fmt, va_list args) {
 	char buffer[LOG_LINE_MAX];
 	size_t buf_len = sizeof(buffer);
@@ -243,11 +242,11 @@ void log_out_va(struct log4c *layout, enum log_level level, const char *fmt, va_
 #ifdef _MSC_VER
 		(void)_write(layout->console_apender, buffer, (unsigned int)used_len);
 #else
-		(void)write(layout->console_apender, buffer, used_len);
+		(void) write(layout->console_apender, buffer, used_len);
 #endif
 	}
 	if (layout->file_appender != NULL) {
-		(void)fwrite(buffer, 1, used_len, layout->file_appender);
+		(void) fwrite(buffer, 1, used_len, layout->file_appender);
 		fflush(layout->file_appender);
 	}
 	unlock(&layout->lock);
@@ -266,11 +265,11 @@ void log_out(struct log4c *layout, enum log_level level, const char *fmt, ...) {
 #ifdef _MSC_VER
 		(void)_write(layout->console_apender, buffer, (unsigned int)used_len);
 #else
-		(void)write(layout->console_apender, buffer, used_len);
+		(void) write(layout->console_apender, buffer, used_len);
 #endif
 	}
 	if (layout->file_appender != NULL) {
-		(void)fwrite(buffer, 1, used_len, layout->file_appender);
+		(void) fwrite(buffer, 1, used_len, layout->file_appender);
 		fflush(layout->file_appender);
 	}
 	unlock(&layout->lock);

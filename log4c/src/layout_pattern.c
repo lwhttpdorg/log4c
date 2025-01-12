@@ -6,7 +6,9 @@
 #endif
 
 #ifdef __linux__
+
 #include <sys/time.h>
+
 #endif
 
 #include "layout_pattern.h"
@@ -14,17 +16,17 @@
 #include "log4c_utils.h"
 
 const char *MONTH_ABBR_NAME[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
 const char *LOG_LEVEL_NAMES[LOG_MAX] = {
-	[LOG_FATAL] = "FATAL",
-	[LOG_ERROR] = "ERROR",
-	[LOG_WARN] = "WARN ",
-	[LOG_INFO] = "INFO ",
-	[LOG_DEBUG] = "DEBUG",
-	[LOG_TRACE] = "TRACE",
+		[LOG_FATAL] = "FATAL",
+		[LOG_ERROR] = "ERROR",
+		[LOG_WARN] = "WARN ",
+		[LOG_INFO] = "INFO ",
+		[LOG_DEBUG] = "DEBUG",
+		[LOG_TRACE] = "TRACE",
 };
 
 /* A two digit representation of a year. e.g. 99 or 03 */
@@ -192,7 +194,7 @@ static size_t pattern_format(const char *pattern, char *buf, size_t len, enum lo
 }
 
 size_t vformat(const char *pattern, char *__restrict buf, size_t buf_len, enum log_level level,
-				const char *fmt, va_list args) {
+               const char *fmt, va_list args) {
 	char message[LOG_LINE_MAX];
 	message[0] = '\0';
 	log4c_scnprintf(message, sizeof(message), fmt, args);
@@ -202,7 +204,7 @@ size_t vformat(const char *pattern, char *__restrict buf, size_t buf_len, enum l
 }
 
 size_t format(const char *pattern, char *__restrict buf, size_t buf_len, enum log_level level,
-			const char *fmt, ...) {
+              const char *fmt, ...) {
 	char message[LOG_LINE_MAX];
 	message[0] = '\0';
 	va_list args;
