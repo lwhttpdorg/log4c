@@ -20,7 +20,9 @@ enum log_level {
 	LOG_FATAL = 0, LOG_ERROR = 1, LOG_WARN = 2, LOG_INFO = 3, LOG_DEBUG = 4, LOG_TRACE = 5, LOG_MAX = 6
 };
 
-struct log4c *get_layout(const char *conf_file);
+void log4c_init(const char *conf_file);
+
+struct log4c *get_layout();
 
 void set_layout_pattern(struct log4c *layout, const char *pattern);
 

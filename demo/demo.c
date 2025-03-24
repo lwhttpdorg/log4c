@@ -8,7 +8,7 @@
 #endif
 
 void layout_test() {
-	struct log4c *log = get_layout("log4c.conf");
+	struct log4c *log = get_layout(NULL);
 	log_trace(log, "this is a trace log...");
 	log_debug(log, "this is a debug log...");
 	log_info(log, "this is a info log...");
@@ -38,6 +38,7 @@ DWORD WINAPI thread_routine(LPVOID lpParam) {
 #endif
 
 int main() {
+	log4c_init("log4c.conf");
 #ifdef _MSC_VER
 	DWORD thread_id;
 	HANDLE handle = CreateThread(NULL, 0, thread_routine, NULL, 0, &thread_id);
@@ -46,7 +47,7 @@ int main() {
 	pthread_t id;
 	pthread_create(&id, NULL, thread_routine, NULL);
 #endif
-	struct log4c *log = get_layout("log4c.conf");
+	struct log4c *log = get_layout();
 	log_trace(log, "this is a trace log...");
 	log_debug(log, "this is a debug log...");
 	log_info(log, "this is a info log...");

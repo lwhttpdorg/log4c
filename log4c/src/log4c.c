@@ -82,13 +82,11 @@ INITIALIZER(initialize) {
 
 #ifdef __GNUC__
 
-__attribute__((constructor))
-static void lo4c_initialize() {
+__attribute__((constructor))static void lo4c_initialize() {
 	layout_initialize();
 }
 
-__attribute__((destructor))
-static void lo4c_finalize() {
+__attribute__((destructor))static void lo4c_finalize() {
 	layout_finalize();
 }
 
@@ -105,7 +103,7 @@ static FILE *open_log(const char *log_file) {
 	}
 	char *pos = strrchr(log_file, '/');
 	if (pos != NULL) {
-		size_t path_len = (size_t) pos - (size_t) log_file;
+		size_t path_len = (size_t)pos - (size_t)log_file;
 		char path[LOG_FILE_NAME_MAX + 1];
 		strncpy(path, log_file, path_len);
 		path[path_len] = '\0';
@@ -209,16 +207,11 @@ void read_conf(const char *filename) {
 	fclose(file);
 }
 
-const char *BANNER = "   __    ___   ___  _  _      ___\n"
-                     "  / /   /___\\ / _ \\| || |    / __\\\n"
-                     " / /   //  /// /_\\/| || |_  / /\n"
-                     "/ /___/ \\_/// /_\\\\ |__   _|/ /___\n"
-                     "\\____/\\___/ \\____/    |_|  \\____/\n";
+const char *BANNER = "   __    ___   ___  _  _      ___\n" "  / /   /___\\ / _ \\| || |    / __\\\n"
+		" / /   //  /// /_\\/| || |_  / /\n" "/ /___/ \\_/// /_\\\\ |__   _|/ /___\n"
+		"\\____/\\___/ \\____/    |_|  \\____/\n";
 
-struct log4c *get_layout(const char *conf_file) {
-	if (NULL == conf_file) {
-		return layout_ptr;
-	}
+void log4c_init(const char *conf_file) {
 	if (NULL == layout_ptr) {
 		lock(&layout_instance.lock);
 		if (NULL == layout_ptr) {
@@ -228,6 +221,13 @@ struct log4c *get_layout(const char *conf_file) {
 			layout_ptr = &layout_instance;
 		}
 		unlock(&layout_instance.lock);
+	}
+}
+
+struct log4c *get_layout() {
+	if (NULL == layout_ptr) {
+		fprintf(stderr, "log4cpp is not initialized! Please initialize it with log4c_init()");
+		return NULL;
 	}
 	return layout_ptr;
 }
@@ -242,11 +242,11 @@ void log_out_va(struct log4c *layout, enum log_level level, const char *fmt, va_
 #ifdef _MSC_VER
 		(void)_write(layout->console_apender, buffer, (unsigned int)used_len);
 #else
-		(void) write(layout->console_apender, buffer, used_len);
+		(void)write(layout->console_apender, buffer, used_len);
 #endif
 	}
 	if (layout->file_appender != NULL) {
-		(void) fwrite(buffer, 1, used_len, layout->file_appender);
+		(void)fwrite(buffer, 1, used_len, layout->file_appender);
 		fflush(layout->file_appender);
 	}
 	unlock(&layout->lock);
@@ -265,11 +265,11 @@ void log_out(struct log4c *layout, enum log_level level, const char *fmt, ...) {
 #ifdef _MSC_VER
 		(void)_write(layout->console_apender, buffer, (unsigned int)used_len);
 #else
-		(void) write(layout->console_apender, buffer, used_len);
+		(void)write(layout->console_apender, buffer, used_len);
 #endif
 	}
 	if (layout->file_appender != NULL) {
-		(void) fwrite(buffer, 1, used_len, layout->file_appender);
+		(void)fwrite(buffer, 1, used_len, layout->file_appender);
 		fflush(layout->file_appender);
 	}
 	unlock(&layout->lock);
